@@ -73,12 +73,12 @@
     [:input {:type "submit" :value "submit"}]]])
 
 (defmethod container :post-form [{:keys [request]}]
- [:div
-  [:h1 "post form"]
-  [:p "Submit a message with post"]
-  [:form {:method "post" :action "post-submit"}
-   [:input {:type "text" :name "name"}]
-   [:input {:type "submit" :value "submit"}]]])
+  [:div
+   [:h1 "post form"]
+   [:p "Submit a message with post"]
+   [:form {:method "post" :action "post-submit"}
+    [:input {:type "text" :name "name"}]
+    [:input {:type "submit" :value "submit"}]]])
 
  (defmethod container :display-result [{:keys [request]}]
    (let [{:keys [params uri]} request
@@ -126,14 +126,15 @@
   (route/resources "/")
   (route/not-found "Page not found"))
 
-  (def app
-    (-> routes
-        p/wrap-params))
+(def app
+  (-> routes
+      p/wrap-params))
 
 (defn -dev-main
   [port-number]
   (jetty/run-jetty (wrap-reload #'app)
                    {:port (Integer. port-number)}))
+
 (defn -main
   [port-number]
   (jetty/run-jetty app

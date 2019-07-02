@@ -32,7 +32,7 @@
    "<div>
       <h1>Hello POST Form!</h1>
       <p>Submit a message with POST</p>
-      <form method=\"post\" action=\"post-submit\">
+         <form method=\"post\" action=\"post-submit\">
        <input type=\"text\" name=\"name\" />
        <input type=\"submit\" value\"submit\" />
       </form>
