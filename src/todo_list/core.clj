@@ -61,8 +61,8 @@
   [:div
    [:h1 "Welcome"]
    [:p "what you wana do"]
-   [:p [:a {:href "/get-form.html"} "Submit a get request"]]
-   [:p [:a {:href "/post-form.html"} "Submit a post request"]]])
+   [:p [:a {:href "/get-form"} "Submit a get request"]]
+   [:p [:a {:href "/post-form"} "Submit a post request"]]])
 
 (defmethod container :get-form [{:keys [request]}]
   [:div
@@ -115,8 +115,8 @@
 ;; Routing
 (defroutes routes
   (GET "/" [] (get-page {:template :home}))
-  (GET "/get-form.html" [] (get-page {:template :get-form}))
-  (GET "/post-form.html" [] (get-page {:template :post-form}))
+  (GET "/get-form" [] (get-page {:template :get-form}))
+  (GET "/post-form" [] (get-page {:template :post-form}))
   (GET "/get-submit" [] (get-page {:template :display-result}))
   (POST "/post-submit" [] (get-page {:template :display-result}))
 
