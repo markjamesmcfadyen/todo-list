@@ -2,9 +2,10 @@
   (:require [ring.adapter.jetty :as jetty]
             [ring.middleware.reload :refer [wrap-reload]]
             [ring.middleware.params :as p]
+            [net.cgrand.enlive-html :as html]
             [ring.util.response :as response]
             [compojure.core :refer [defroutes GET POST]]
-            [compojure.route :as route]
+            [compojure.route :refer [not-found]]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all]
             [hiccup.form :refer :all]
@@ -18,11 +19,6 @@
                       :last-name "Messi"
                       :stats {:goals 20 :assists 19 :yellow-cards 0}
                       :address {:city "Barcalona" :state "Barcalona" :postal-code "7130"}}})
-
-
-;;Update Goals
-(let [stats (get-in users [:profile :stats])]
-  (update stats :goals inc))
 
 ;; Helpers
 (defn processed-player-data [users]
@@ -51,41 +47,32 @@
       (response/redirect "/"))))
 
 ;; Template
-(defn head []
-  [:head
-   (include-css "/css/todo.css")])
-
 (def menu
   [:div.menu
-   [:a {:href "/"} "Home"]
-   [:a {:href "/users"} "Users"]
-   [:a {:href "/signup"} "Signup"]])
+   [:a {:href "/"} "Home"]])
 
-(defmulti container :template)
+(defn layout []
+  )
 
-(defmethod container :home [{:keys [request]}]
-  [:div
-   [:h1 "Welcome"]
+(defn home [request]
+  (html5 [:div
+          (processed-player-data users)
+          [:p "Update goals: "]
+          [:form {:method "post" :action "post-update-goal-count"}
+           [:input {:type "text" :name "name"}]
+           [:input {:type "submit" :value "submit"}]]
+          [:div
+          [:p "Guess the word: "]
+          [:form {:method "post" :action "post-submit"}
+           [:input {:type "text" :name "name"}]
+           [:input {:type "submit" :value "submit"}]]]]))
 
-   (processed-player-data users)
+(defn success-result []
+  (html5
+   [:p "success, you guessed correctly"]))
 
 
-   [:p "Update goals: "]
-   [:form {:method "post" :action "update-goal-count"}
-    [:input {:type "submit" :value "submit"}]]
-
-
-   [:p "guess word"]
-   [:form {:method "post" :action "post-submit"}
-    [:input {:type "text" :name "name"}]
-    [:input {:type "submit" :value "submit"}]]
-   [:p [:a {:href "/post-form"} "Submit a post request"]]])
-
-(defmethod container :success [{:keys [request]}]
-  [:div
-   [:h1 "grats"]])
-
-(defn get-page
+#_(defn get-page
   [request]
   (html5 {:lang "en"}
          menu
@@ -96,11 +83,9 @@
 
 ;; Routing
 (defroutes routes
-  (GET "/" [] (get-page {:template :home}))
-  (GET "/success" [] (get-page {:template :success}))
+  (GET "/" request (home request))
   (POST "/post-submit" request (check-result request))
-  ;(POST "/update-goal-count" request (increment-goal-count request))
-  (route/resources "/"))
+  (GET "/success" request (success-result)))
 
 (def app
   (-> routes
