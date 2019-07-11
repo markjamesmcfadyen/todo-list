@@ -4,7 +4,7 @@
             [ring.middleware.params :as p]
             [ring.util.response :as response]
             [compojure.core :refer [defroutes GET POST]]
-            [compojure.route :refer [not-found]]
+            [compojure.route :as route]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all]
             [hiccup.form :refer :all]
@@ -13,38 +13,46 @@
             [ring.handler.dump :refer [handle-dump]]))
 
 ;; Data
-(def users {:username "sally"
-            :profile {:name "Sally Clojurian"
-                      :address {:city "Austin" :state "TX" :postal-code "7130"}}})
+(def users {:username "lionelmessi"
+            :profile {:first-name "Lionel"
+                      :last-name "Messi"
+                      :stats {:goals 20 :assists 19 :yellow-cards 0}
+                      :address {:city "Barcalona" :state "Barcalona" :postal-code "7130"}}})
+
+
+;;Update Goals
+(let [stats (get-in users [:profile :stats])]
+  (update stats :goals inc))
 
 ;; Helpers
-(defn get-user-address-info [users]
-  (let [address         (get-in users [:profile :address])
-        value-processed (map (fn [[key value]] value) address)
-        key-processed   (map (fn [[key value]] key) address)]
+(defn processed-player-data [users]
+  (let [full-name (str (get-in users [:profile :first-name])
+                       " "
+                       (get-in users [:profile :last-name]))
+        stats (get-in users [:profile :stats])
+        stats-values (map (fn [[key value]] value) stats)
+        stats-headings (map (fn [[key value]] key) stats)]
     [:div
-     [:ul.list
-      [:p (str address)]
-      [:p value-processed]
-      [:p key-processed]
-      (for [values value-processed]
-        [:li {:class (seq key-processed)}
-         values])]]))
+     [:table
+      [:tr
+       [:th "Full name:"]
+       (for [values stats-headings]
+        [:th values])]
+      [:tr
+       [:td (str full-name)]
+       (for [keys stats-values]
+         [:td keys])]]]))
 
-(defn get-user-name [users]
-  (get-in users [:profile :name]))
-
-(defn input-control [type id name & [value]]
-  [:div.form-group
-   (list
-     (label id name)
-     (type {:class "form-control"} id value))])
-
+(defn check-result [request]
+  (let [{:keys [params]} request
+        param-name (get params "name")]
+    (if (re-matches #"mark" param-name)
+      (response/redirect "/success")
+      (response/redirect "/"))))
 
 ;; Template
-(defn head [title]
+(defn head []
   [:head
-   [:title title]
    (include-css "/css/todo.css")])
 
 (def menu
@@ -53,78 +61,46 @@
    [:a {:href "/users"} "Users"]
    [:a {:href "/signup"} "Signup"]])
 
-(defmulti container :template :default :not-found)
-
-; (defmethod container [request])
+(defmulti container :template)
 
 (defmethod container :home [{:keys [request]}]
   [:div
    [:h1 "Welcome"]
-   [:p "what you wana do"]
-   [:p [:a {:href "/get-form"} "Submit a get request"]]
-   [:p [:a {:href "/post-form"} "Submit a post request"]]])
 
-(defmethod container :get-form [{:keys [request]}]
-  [:div
-   [:h1 "Get form"]
-   [:p "Submit a message with GET"]
-   [:form {:method "get" :action "get-submit"}
-    [:input {:type "text" :name "name"}]
-    [:input {:type "submit" :value "submit"}]]])
+   (processed-player-data users)
 
-(defmethod container :post-form [{:keys [request]}]
-  [:div
-   [:h1 "post form"]
-   [:p "Submit a message with post"]
+
+   [:p "Update goals: "]
+   [:form {:method "post" :action "update-goal-count"}
+    [:input {:type "submit" :value "submit"}]]
+
+
+   [:p "guess word"]
    [:form {:method "post" :action "post-submit"}
     [:input {:type "text" :name "name"}]
-    [:input {:type "submit" :value "submit"}]]])
+    [:input {:type "submit" :value "submit"}]]
+   [:p [:a {:href "/post-form"} "Submit a post request"]]])
 
- (defmethod container :display-result [{:keys [request]}]
-   (let [{:keys [params uri]} request
-         param-name (get params "name")
-         request-type (if (= uri "/post-submit") "POST" "GET")]
-     [:div
-      [:h1 (str "hello" param-name)]
-      [:p (str "submitted via a " request-type " request")]]))
-
-; (defmethod container :signup [context]
-;   [:div.form-group
-;   (form-to [:post "/signup"]
-;            (input-control text-field "name" "Name" "name")
-;            (submit-button {:class "btn btn-success"} "Create account"))])
-;
-; (defmethod container :users [context]
-;   [:div
-;    [:h1 (str "Username: " (get-user-name users))]
-;    [:p "Address Info:"]
-;    (get-user-address-info users)])
+(defmethod container :success [{:keys [request]}]
+  [:div
+   [:h1 "grats"]])
 
 (defn get-page
-  [{:keys [title request]
-    :or {title "Bluth company"}
-    :as context}]
+  [request]
   (html5 {:lang "en"}
-         (head title)
          menu
          [:body
           [:div#wrap
            [:div.container
-            (container context)]]]))
+            (container request)]]]))
 
 ;; Routing
 (defroutes routes
   (GET "/" [] (get-page {:template :home}))
-  (GET "/get-form" [] (get-page {:template :get-form}))
-  (GET "/post-form" [] (get-page {:template :post-form}))
-  (GET "/get-submit" [] (get-page {:template :display-result}))
-  (POST "/post-submit" [] (get-page {:template :display-result}))
-
-  (GET "/signup" [] (get-page {:template :signup}))
-  (GET "/users" [] (get-page {:title        "User List"
-                              :template     :users}))
-  (route/resources "/")
-  (route/not-found "Page not found"))
+  (GET "/success" [] (get-page {:template :success}))
+  (POST "/post-submit" request (check-result request))
+  ;(POST "/update-goal-count" request (increment-goal-count request))
+  (route/resources "/"))
 
 (def app
   (-> routes

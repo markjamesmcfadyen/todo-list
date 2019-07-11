@@ -8,7 +8,8 @@
                  [compojure "1.6.1"]
                  [hiccup "1.0.5"]
                  [com.novemberain/validateur "2.6.0"]
-                 [lib-noir "0.9.9"]]
+                 [lib-noir "0.9.9"]
+                 [enlive "1.1.6"]]
 
   :repl-options {:init-ns todo-list.core}
   :main todo-list.core
