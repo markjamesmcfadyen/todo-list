@@ -33,4 +33,6 @@
   ((compose-sets password-validator email-validator username-validator) signup))
 
 (comment
-  (validate-signup { :email "thedude@bides.net" :password "12345678"}))
+  (validate-signup { :email "thedude@bides.net" :password "12345678"})
+
+  (email-validator {:email "mark@cogn.com"}))

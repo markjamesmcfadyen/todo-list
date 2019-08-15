@@ -46,6 +46,17 @@
       (response/redirect "/success")
       (response/redirect "/"))))
 
+
+(defn check-result-2 [request]
+  (let [{:keys [params]} request
+        param-name (get params "name")
+        errors (v/email-validator {:email param-name})]
+    (if (empty? errors)
+      (response/redirect "/success")
+      (response/redirect "/success"))
+    #_(prn request)))
+
+
 ;; Template
 (def menu
   [:div.menu
@@ -62,10 +73,12 @@
            [:input {:type "text" :name "name"}]
            [:input {:type "submit" :value "submit"}]]
           [:div
-          [:p "Guess the word: "]
-          [:form {:method "post" :action "post-submit"}
-           [:input {:type "text" :name "name"}]
-           [:input {:type "submit" :value "submit"}]]]]))
+           [:p "Guess the word: "]
+           [:form {:method "post" :action "post-submit"}
+            [:input {:type "text" :name "name"}]
+            [:input {:type "submit" :value "submit"}]]
+           #_[:p.error (prn (get request :params))]
+          ]]))
 
 (defn success-result []
   (html5
@@ -84,8 +97,8 @@
 ;; Routing
 (defroutes routes
   (GET "/" request (home request))
-  (POST "/post-submit" request (check-result request))
-  (GET "/success" request (success-result)))
+  (POST "/post-submit" request (check-result-2 request))
+  (GET "/success" request (success-result request)))
 
 (def app
   (-> routes
@@ -100,3 +113,13 @@
   [port-number]
   (jetty/run-jetty app
                    {:port (Integer. port-number)}))
+
+
+
+(comment
+
+  (def request
+    {:a "1" :b "2" :c "3"})
+
+
+  (assoc request :d "4"))
