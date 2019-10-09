@@ -13,20 +13,39 @@
             [ring.handler.dump :refer [handle-dump]]))
 
 ;; Data
-(def users {:username "lionelmessi"
-            :profile {:first-name "Lionel"
-                      :last-name "Messi"
-                      :stats {:goals 20 :assists 19 :yellow-cards 0}
-                      :address {:city "Barcalona" :state "Barcalona" :postal-code "7130"}}})
+(def users
+  (atom {:players [{:id   1
+                    :first-name "Lionel"
+                    :last-name  "Messi"}
+                   {:id   2
+                    :first-name "Christano"
+                    :last-name  "Ronaldo"}
+                   ]}))
 
+@users
 
-;;Update Goals
-(let [stats (get-in users [:profile :stats])]
-  (update stats :goals inc))
+(seq @users)
+(def items (get @users :players))
+
+(def prep
+  (into {} (map (fn [[id data]] data) @users)))
+(map (fn [[]]))
+
+(for [user prep]
+  (map (fn )))
+(map (fn [[id data]] id) @users)
 
 ;; Helpers
+(defn process-players []
+  [:div
+     [:table
+      [:tr
+       ]
+      [:tr
+       [:td (str full-name)]]]])
+
 (defn processed-player-data [users]
-  (let [full-name (str (get-in users [:profile :first-name])
+  (let [full-name (str (get-in users [:users :first-name])
                        " "
                        (get-in users [:profile :last-name]))
         stats (get-in users [:profile :stats])
