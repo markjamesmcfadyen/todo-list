@@ -13,61 +13,58 @@
             [ring.handler.dump :refer [handle-dump]]))
 
 ;; Data
-(def users
-  (atom {:players [{:id   1
-                    :first-name "Lionel"
-                    :last-name  "Messi"}
-                   {:id   2
-                    :first-name "Christano"
-                    :last-name  "Ronaldo"}
-                   ]}))
+(def *users
+  (atom {1 {:first-name "Lionel"
+            :last-name  "Messi"
+            :team       "Barca"
+            :goals      20
+            :id         1}
+         2 {:first-name "Christano"
+            :last-name  "Ronaldo"
+            :team       "Real Madrid"
+            :goals      25
+            :id         2}}
+        ))
 
-@users
+(defn add-user [users new]
+  (let [new-index (inc (apply max (or (keys users) [0])))]
+    (assoc users new-index (assoc new :id new-index))))
 
-(seq @users)
-(def items (get @users :players))
+(defn remove-user [users user-to-remove]
+  (dissoc users user-to-remove))
 
-(def prep
-  (into {} (map (fn [[id data]] data) @users)))
-(map (fn [[]]))
+(defn update-atom-value [users user-to-update-goal value-to-update value]
+    (assoc-in users [user-to-update-goal value-to-update] value))
 
-(for [user prep]
-  (map (fn )))
-(map (fn [[id data]] id) @users)
 
-;; Helpers
-(defn process-players []
-  [:div
-     [:table
-      [:tr
-       ]
-      [:tr
-       [:td (str full-name)]]]])
+(comment
+  @*users
+  (def users @*users)
 
-(defn processed-player-data [users]
-  (let [full-name (str (get-in users [:users :first-name])
-                       " "
-                       (get-in users [:profile :last-name]))
-        stats (get-in users [:profile :stats])
-        stats-values (map (fn [[key value]] value) stats)
-        stats-headings (map (fn [[key value]] key) stats)]
+  (add-user users {:first-name "asd"
+                     :last-name  "das"
+                     :team       "asd"
+                     :goals      0})
+
+  (update-atom-value users 1 :goals 520)
+
+  (update-atom-value users 2 :first-name "haha")
+  )
+
+(defn processed-player-data [{:keys [users]}]
+  (let [headings (keys (get (first users) 1))]
     [:div
      [:table
       [:tr
-       [:th "Full name:"]
-       (for [values stats-headings]
-        [:th values])]
-      [:tr
-       [:td (str full-name)]
-       (for [keys stats-values]
-         [:td keys])]]]))
-
-(defn check-result [request]
-  (let [{:keys [params]} request
-        param-name (get params "name")]
-    (if (re-matches #"mark" param-name)
-      (response/redirect "/success")
-      (response/redirect "/"))))
+       (for [heading headings]
+         [:td (name heading)])]
+      (for [[k v] users]
+        [:tr
+         (for [heading headings]
+           [:td
+            (get v heading)])
+          ])]])
+  )
 
 ;; Template
 (defn head []
@@ -82,27 +79,10 @@
 
 (defmulti container :template)
 
-(defmethod container :home [{:keys [request]}]
+(defmethod container :home [request]
   [:div
    [:h1 "Welcome"]
-
-   (processed-player-data users)
-
-
-   [:p "Update goals: "]
-   [:form {:method "post" :action "update-goal-count"}
-    [:input {:type "submit" :value "submit"}]]
-
-
-   [:p "guess word"]
-   [:form {:method "post" :action "post-submit"}
-    [:input {:type "text" :name "name"}]
-    [:input {:type "submit" :value "submit"}]]
-   [:p [:a {:href "/post-form"} "Submit a post request"]]])
-
-(defmethod container :success [{:keys [request]}]
-  [:div
-   [:h1 "grats"]])
+   (processed-player-data request)])
 
 (defn get-page
   [request]
@@ -111,14 +91,11 @@
          [:body
           [:div#wrap
            [:div.container
-            (container request)]]]))
+            (container (assoc request :users @*users))]]]))
 
 ;; Routing
 (defroutes routes
   (GET "/" [] (get-page {:template :home}))
-  (GET "/success" [] (get-page {:template :success}))
-  (POST "/post-submit" request (check-result request))
-  ;(POST "/update-goal-count" request (increment-goal-count request))
   (route/resources "/"))
 
 (def app
